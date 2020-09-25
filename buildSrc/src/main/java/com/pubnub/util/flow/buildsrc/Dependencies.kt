@@ -21,7 +21,7 @@ object Versions {
 }
 
 object Libs {
-    const val androidGradlePlugin = "com.android.tools.build:gradle:4.2.0-alpha10"
+    const val androidGradlePlugin = "com.android.tools.build:gradle:4.2.0-alpha12"
     const val jdkDesugar = "com.android.tools:desugar_jdk_libs:1.0.9"
 
     const val material = "com.google.android.material:material:1.1.0"
@@ -31,6 +31,11 @@ object Libs {
         const val stdlib = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$version"
         const val gradlePlugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:$version"
         const val extensions = "org.jetbrains.kotlin:kotlin-android-extensions:$version"
+    }
+
+    object Dcendents {
+        private const val version = "2.1"
+        const val gradlePlugin = "com.github.dcendents:android-maven-gradle-plugin:$version"
     }
 
     object PubNub {
