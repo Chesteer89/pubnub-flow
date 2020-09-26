@@ -34,6 +34,22 @@ suspend fun <Input, Output> Endpoint<Input, Output>.single(
 }
 
 @ExperimentalCoroutinesApi
+suspend fun <Input, Output> Endpoint<Input, Output>.singleResult(
+        onComplete: (Output, PNStatus) -> Unit,
+        onError: (Exception) -> Unit = {}
+) = try {
+    val result = singleResult()
+    onComplete.invoke(result.result!!, result.status)
+} catch (e: Exception) {
+    if(e is CancellationException && e.cause is PNException) {
+        val exception = e.cause as PNException
+        onError.invoke(exception)
+    } else {
+        onError.invoke(e)
+    }
+}
+
+@ExperimentalCoroutinesApi
 suspend fun <Input, Output> Endpoint<Input, Output>.single(): Output =
     this.flow().single()
 
