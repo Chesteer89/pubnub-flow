@@ -64,7 +64,7 @@ private fun <Input, Output> Endpoint<Input, Output>.flow(): Flow<Output> =
             println("Callback $result $status")
             if (status.error) cancel(status.exception!!.errorMessage!!, status.exception!!)
             else sendBlocking(result!!)
-            silentCancel()
+            //silentCancel()
         }
         async(callback)
 
@@ -77,7 +77,7 @@ private fun <Input, Output> Endpoint<Input, Output>.flowResult(): Flow<PNResult<
         val callback = { result: Output?, status: PNStatus ->
             if (status.error) cancel(status.exception!!.errorMessage!!, PNException(status.exception!!, status))
             else sendBlocking(sendBlocking(PNResult(result, status)))
-            silentCancel()
+            //silentCancel()
         }
         async(callback)
 
