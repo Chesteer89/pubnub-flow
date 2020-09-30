@@ -11,6 +11,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.sendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.single
 import java.lang.Exception
 
@@ -51,11 +52,11 @@ suspend fun <Input, Output> Endpoint<Input, Output>.singleResult(
 
 @ExperimentalCoroutinesApi
 suspend fun <Input, Output> Endpoint<Input, Output>.single(): Output =
-    this.flow().single()
+    this.flow().first()
 
 @ExperimentalCoroutinesApi
 suspend fun <Input, Output> Endpoint<Input, Output>.singleResult(): PNResult<Output> =
-    this.flowResult().single()
+    this.flowResult().first()
 
 @ExperimentalCoroutinesApi
 private fun <Input, Output> Endpoint<Input, Output>.flow(): Flow<Output> =
@@ -76,7 +77,7 @@ private fun <Input, Output> Endpoint<Input, Output>.flowResult(): Flow<PNResult<
     callbackFlow {
         val callback = { result: Output?, status: PNStatus ->
             if (status.error) cancel(status.exception!!.errorMessage!!, PNException(status.exception!!, status))
-            else sendBlocking(sendBlocking(PNResult(result, status)))
+            else sendBlocking(PNResult(result, status))
             //silentCancel()
         }
         async(callback)
