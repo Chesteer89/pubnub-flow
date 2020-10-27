@@ -14,7 +14,11 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.single
 import java.lang.Exception
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
+// region Flow
 @ExperimentalCoroutinesApi
 suspend fun <Input, Output> Endpoint<Input, Output>.single(
         onComplete: (Output) -> Unit,
@@ -84,3 +88,23 @@ private fun <Input, Output> Endpoint<Input, Output>.flowResult(): Flow<PNResult<
 
         awaitClose { this@flowResult.silentCancel() }
     }
+// endregion
+
+// region Coroutine
+suspend fun <Input, Output> Endpoint<Input, Output>.coroutine(): Output =
+        suspendCoroutine { continuation ->
+            val callback = { result: Output?, status: PNStatus ->
+                if(status.error) continuation.resumeWithException(PNException(status.exception!!, status))
+                else continuation.resume(result!!)
+            }
+            async(callback)
+        }
+
+suspend fun <Input, Output> Endpoint<Input, Output>.coroutineResult(): PNResult<Output> =
+        suspendCoroutine { continuation ->
+            val callback = { result: Output?, status: PNStatus ->
+                continuation.resume(PNResult(result, status))
+            }
+            async(callback)
+        }
+// endregion
