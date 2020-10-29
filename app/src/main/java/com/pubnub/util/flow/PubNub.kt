@@ -3,12 +3,12 @@ package com.pubnub.util.flow
 import com.pubnub.api.PubNub
 import com.pubnub.api.callbacks.SubscribeCallback
 import com.pubnub.api.models.consumer.PNStatus
-import com.pubnub.api.models.consumer.pubsub.BasePubSubResult
 import com.pubnub.api.models.consumer.pubsub.PNMessageResult
 import com.pubnub.api.models.consumer.pubsub.PNPresenceEventResult
 import com.pubnub.api.models.consumer.pubsub.PNSignalResult
 import com.pubnub.api.models.consumer.pubsub.message_actions.PNMessageActionResult
 import com.pubnub.api.models.consumer.pubsub.objects.PNObjectEventResult
+import com.pubnub.util.data.PubNubEvent
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.sendBlocking
 import kotlinx.coroutines.flow.Flow
@@ -52,25 +52,12 @@ fun PubNub.subscribeBy(
     this.addListener(callback)
 }
 
-val PubNub.status
-get(): Flow<PNStatus> =
+val PubNub.event
+get(): Flow<PubNubEvent> =
         callbackFlow {
             val callback: SubscribeCallback = object : SubscribeCallback(){
                 override fun status(pubnub: PubNub, pnStatus: PNStatus) {
                     sendBlocking(pnStatus)
-                }
-            }
-            this@status.addListener(callback)
-
-            awaitClose { this@status.removeListener(callback) }
-        }
-
-val PubNub.event
-get(): Flow<BasePubSubResult> =
-        callbackFlow {
-            val callback: SubscribeCallback = object : SubscribeCallback(){
-                override fun status(pubnub: PubNub, pnStatus: PNStatus) {
-                    // just ignore
                 }
 
                 override fun message(pubnub: PubNub, pnMessageResult: PNMessageResult) {
@@ -98,39 +85,37 @@ get(): Flow<BasePubSubResult> =
             awaitClose { this@event.removeListener(callback) }
         }
 
-// todo: cannot use BasePubSubResult cause objects doesn't extends it...
-fun Flow<Any>.onMessage(action: (PNMessageResult) -> Unit): Flow<Any> =
+fun Flow<PubNubEvent>.onMessage(action: (PNMessageResult) -> Unit): Flow<PubNubEvent> =
         onEach { if(it is PNMessageResult) action.invoke(it) }
 
-fun Flow<Any>.onMessageAction(action: (PNMessageActionResult) -> Unit): Flow<Any> =
+fun Flow<PubNubEvent>.onMessageAction(action: (PNMessageActionResult) -> Unit): Flow<PubNubEvent> =
         onEach { if(it is PNMessageActionResult) action.invoke(it) }
 
-fun Flow<Any>.onObject(action: (PNObjectEventResult) -> Unit): Flow<Any> =
-        onEach { if(it is PNObjectEventResult) action.invoke(it) }
-
-fun Flow<Any>.onPresence(action: (PNPresenceEventResult) -> Unit): Flow<Any> =
-        onEach { if(it is PNPresenceEventResult) action.invoke(it) }
-
-fun Flow<Any>.onSignal(action: (PNSignalResult) -> Unit): Flow<Any> =
+fun Flow<PubNubEvent>.onSignal(action: (PNSignalResult) -> Unit): Flow<PubNubEvent> =
         onEach { if(it is PNSignalResult) action.invoke(it) }
 
+fun Flow<PubNubEvent>.onObject(action: (PNObjectEventResult) -> Unit): Flow<PubNubEvent> =
+        onEach { if(it is PNObjectEventResult) action.invoke(it) }
+
+fun Flow<PubNubEvent>.onPresence(action: (PNPresenceEventResult) -> Unit): Flow<PubNubEvent> =
+        onEach { if(it is PNPresenceEventResult) action.invoke(it) }
 
 @Suppress("UNCHECKED_CAST")
-val Flow<Any>.message: Flow<PNMessageResult>
+val Flow<PubNubEvent>.message: Flow<PNMessageResult>
 get() = filter { it is PNMessageResult } as Flow<PNMessageResult>
 
 @Suppress("UNCHECKED_CAST")
-val Flow<Any>.messageAction: Flow<PNMessageActionResult>
+val Flow<PubNubEvent>.messageAction: Flow<PNMessageActionResult>
 get() = filter { it is PNMessageActionResult } as Flow<PNMessageActionResult>
 
 @Suppress("UNCHECKED_CAST")
-val Flow<Any>.`object`: Flow<PNObjectEventResult>
+val Flow<PubNubEvent>.signal: Flow<PNSignalResult>
+    get() = filter { it is PNSignalResult } as Flow<PNSignalResult>
+
+@Suppress("UNCHECKED_CAST")
+val Flow<PubNubEvent>.`object`: Flow<PNObjectEventResult>
 get() = filter { it is PNObjectEventResult } as Flow<PNObjectEventResult>
 
 @Suppress("UNCHECKED_CAST")
-val Flow<Any>.presence: Flow<PNPresenceEventResult>
+val Flow<PubNubEvent>.presence: Flow<PNPresenceEventResult>
 get() = filter { it is PNPresenceEventResult } as Flow<PNPresenceEventResult>
-
-@Suppress("UNCHECKED_CAST")
-val Flow<Any>.signal: Flow<PNSignalResult>
-get() = filter { it is PNSignalResult } as Flow<PNSignalResult>
